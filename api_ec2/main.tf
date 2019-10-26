@@ -1,3 +1,11 @@
+terraform {
+    backend "s3" {
+        bucket = "coffay-terraform-state"
+        key = "bespin_api_ec2"
+        region = "us-east-1"
+        profile = "default"
+    }
+}
 provider "aws" {
   profile = "default"
   region  = "us-east-1"
