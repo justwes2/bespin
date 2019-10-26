@@ -2,11 +2,15 @@ provider "aws" {
   profile = "default"
   region  = "us-east-1"
 }
+variable "fn_version" {
+  default = "1.0.1"
+}
+
 resource "aws_lambda_function" "function" {
   function_name = "bespin_report_ec2"
 
   s3_bucket = "ossus-repository"
-  s3_key    = "v1.0.0/function.zip"
+  s3_key    = "v${var.fn_version}/function.zip"
 
   handler = "function.lambda_handler"
   runtime = "python3.7"
@@ -79,6 +83,16 @@ resource "aws_api_gateway_deployment" "bespin_report_ec2" {
 
   rest_api_id = aws_api_gateway_rest_api.bespin_report_ec2.id
   stage_name  = "test"
+}
+resource "aws_lambda_permission" "apigw" {
+  statement_id = "AllowAPIGatewayInvoke"
+  action = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.function.function_name
+  principal = "apigateway.amazonaws.com"
+  source_arn = "${aws_api_gateway_rest_api.bespin_report_ec2.execution_arn}/*/*"
+}
+output "base_url" {
+  value = aws_api_gateway_deployment.bespin_report_ec2.invoke_url
 }
 
 

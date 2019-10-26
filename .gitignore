@@ -7,3 +7,6 @@
 
 # Testing
 *.txt
+
+# AppleFail
+.DS_Store
