@@ -1,0 +1,9 @@
+# Terraform
+.terraform
+*.backup
+
+# Artifacts
+*.zip
+
+# Testing
+*.txt

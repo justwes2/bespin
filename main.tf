@@ -8,7 +8,7 @@ resource "aws_lambda_function" "function" {
   s3_bucket = "ossus-repository"
   s3_key = "v1.0.0/function.zip"
 
-  handler = "lambda_handler"
+  handler = "function.lambda_handler"
   runtime = "python3.7"
 
   role = aws_iam_role.lambda_exec.arn
