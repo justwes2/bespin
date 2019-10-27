@@ -10,8 +10,19 @@ provider "aws" {
   profile = "default"
   region  = "us-east-1"
 }
+data "aws_caller_identity" "current" {}
+variable "fn_version" {
+  default = "1.0.0"
+}
+variable "service" {
+  default = "table_ec2" 
+}
+variable "table_name" {
+  default = "bespin_report_ec2"
+}
+
 resource "aws_dynamodb_table" "bespin_report_ec2" {
-  name = "bespin_report_ec2"
+  name = var.table_name
   billing_mode = "PROVISIONED"
   read_capacity = 5
   write_capacity = 5
@@ -21,12 +32,7 @@ resource "aws_dynamodb_table" "bespin_report_ec2" {
       type = "S"
   }
 }
-variable "fn_version" {
-  default = "1.0.0"
-}
-variable "service" {
-  default = "table_ec2" 
-}
+
 resource "aws_lambda_function" "function" {
   function_name = "bespin_table_ec2"
 
@@ -94,11 +100,11 @@ resource "aws_iam_policy" "lambda_logging" {
         "Effect": "Allow",
         "Action": "dynamodb:*",
         "Resource": [
-            "arn:aws:dynamodb:us-east-1:483374585662:table/bespin_report_ec2/backup/*",
-            "arn:aws:dynamodb:us-east-1:483374585662:table/bespin_report_ec2/index/*",
-            "arn:aws:dynamodb:us-east-1:483374585662:table/bespin_report_ec2/stream/*",
-            "arn:aws:dynamodb::483374585662:global-table/bespin_report_ec2",
-            "arn:aws:dynamodb:us-east-1:483374585662:table/bespin_report_ec2"
+            "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/${var.table_name}/backup/*",
+            "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/${var.table_name}/index/*",
+            "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/${var.table_name}/stream/*",
+            "arn:aws:dynamodb::${data.aws_caller_identity.current.account_id}:global-table/${var.table_name}",
+            "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/${var.table_name}"
         ]
     },
     {
