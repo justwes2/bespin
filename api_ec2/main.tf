@@ -13,12 +13,14 @@ provider "aws" {
 variable "fn_version" {
   default = "1.0.1"
 }
-
+variable "service" {
+  default = "api_ec2" 
+}
 resource "aws_lambda_function" "function" {
   function_name = "bespin_report_ec2"
 
   s3_bucket = "ossus-repository"
-  s3_key    = "v${var.fn_version}/function.zip"
+  s3_key    = "${var.service}/v${var.fn_version}/function.zip"
 
   handler = "function.lambda_handler"
   runtime = "python3.7"
