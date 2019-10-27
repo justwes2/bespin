@@ -1,3 +1,4 @@
+import json
 import boto3
 
 def lambda_handler(event, context):
@@ -7,13 +8,11 @@ def lambda_handler(event, context):
 
     response = table.scan()
     instance_data = response['Items']
-    
+
     return {
         'statusCode': 200,
         'headers': {
             'Content-Type': 'application/json'
         },
-        'body': instance_data
+        'body': json.dumps(instance_data)
     }
-
-lambda_handler("", "")

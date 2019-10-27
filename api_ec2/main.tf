@@ -10,11 +10,15 @@ provider "aws" {
   profile = "default"
   region  = "us-east-1"
 }
+data "aws_caller_identity" "current" {}
 variable "fn_version" {
   default = "1.0.1"
 }
 variable "service" {
   default = "api_ec2" 
+}
+variable "table_name" {
+  default = "bespin_report_ec2"
 }
 resource "aws_lambda_function" "function" {
   function_name = "bespin_report_ec2"
@@ -28,7 +32,7 @@ resource "aws_lambda_function" "function" {
   role = aws_iam_role.lambda_exec.arn
 }
 resource "aws_iam_role" "lambda_exec" {
-  name = "bespin_report_ec2_role"
+  name = "bespin_api_ec2_role"
 
   assume_role_policy = <<EOF
 {
@@ -45,6 +49,72 @@ resource "aws_iam_role" "lambda_exec" {
   ]
 }
 EOF
+}
+resource "aws_iam_policy" "lambda_logging" {
+  name = "bespin_api_ec2_policy"
+  path = "/"
+  description = "IAM policy for logging from a lambda"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*",
+      "Effect": "Allow"
+    },
+    {
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:BatchGetItem",
+            "dynamodb:ConditionCheckItem",
+            "dynamodb:Scan",
+            "dynamodb:ListTagsOfResource",
+            "dynamodb:Query",
+            "dynamodb:DescribeStream",
+            "dynamodb:DescribeTimeToLive",
+            "dynamodb:DescribeGlobalTableSettings",
+            "dynamodb:DescribeTable",
+            "dynamodb:GetShardIterator",
+            "dynamodb:DescribeGlobalTable",
+            "dynamodb:GetItem",
+            "dynamodb:DescribeContinuousBackups",
+            "dynamodb:DescribeBackup",
+            "dynamodb:GetRecords"
+        ],
+        "Resource": [
+            "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/${var.table_name}/backup/*",
+            "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/${var.table_name}/index/*",
+            "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/${var.table_name}/stream/*",
+            "arn:aws:dynamodb::${data.aws_caller_identity.current.account_id}:global-table/${var.table_name}",
+            "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/${var.table_name}"
+        ]
+    },
+    {
+        "Effect": "Allow",
+        "Action": [
+            "dynamodb:DescribeReservedCapacityOfferings",
+            "dynamodb:ListGlobalTables",
+            "dynamodb:ListTables",
+            "dynamodb:DescribeReservedCapacity",
+            "dynamodb:ListBackups",
+            "dynamodb:DescribeLimits",
+            "dynamodb:ListStreams"
+        ],
+        "Resource": "*"
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "lambda_logs" {
+  role = "${aws_iam_role.lambda_exec.name}"
+  policy_arn = "${aws_iam_policy.lambda_logging.arn}"
 }
 resource "aws_api_gateway_rest_api" "bespin_report_ec2" {
   name        = "bespin_report_ec2"
